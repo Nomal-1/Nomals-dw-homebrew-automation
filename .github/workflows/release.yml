@@ -1,0 +1,31 @@
+name: Release
+
+# v로 시작하는 태그를 푸시하면(예: v0.2.0) module.json과 module.zip을 묶어서
+# GitHub 릴리즈를 자동으로 만든다. Foundry 매니페스트/다운로드 URL
+# (module.json의 manifest/download 필드)이 releases/latest/download/...를
+# 가리키고 있으므로, 이 워크플로만 있으면 태그 푸시 한 번으로 그 링크가
+# 항상 최신 버전을 가리키게 유지된다.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build module.zip
+        run: zip -r module.zip module.json scripts styles lang README.md
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            module.json
+            module.zip
+          generate_release_notes: true
