@@ -1,5 +1,68 @@
 {
   "NOMALS_DW_HOMEBREW": {
-    "MissingDependencyWarning": "Nomal's DW 홈브루 자동화: 필수 모듈 dw-automation이 켜져 있지 않아 이 모듈이 동작하지 않습니다."
+    "MissingDependencyWarning": "Nomal's DW 홈브루 자동화: 필수 모듈 dw-automation이 켜져 있지 않아 이 모듈이 동작하지 않습니다.",
+    "Confirm": "확인",
+    "Cancel": "취소",
+    "Settings": {
+      "EnableGuiltyGear": {
+        "Name": "길티기어/스트라이브 자동화 켜기",
+        "Hint": "게이지, 스턴엣지/다이어 에클라/폴트리스 디펜스, 스트라이브 계열(세이크리드 엣지/라이드 더 라이트닝/드래곤 인스톨) 자동화를 켭니다."
+      },
+      "GuiltyGearMoveNames": {
+        "Name": "길티기어 액션 이름",
+        "Hint": "레벨업 창의 \"배우기\" 버튼 및 부여 로직이 인식할 길티기어 액션 이름(콤마로 구분, 여러 개 가능)."
+      },
+      "StriveMoveNames": {
+        "Name": "스트라이브 액션 이름",
+        "Hint": "레벨업 창의 \"배우기\" 버튼 및 부여 로직이 인식할 스트라이브 액션 이름(콤마로 구분, 여러 개 가능)."
+      },
+      "StriveRequiredLevel": {
+        "Name": "스트라이브 요구 레벨",
+        "Hint": "이 레벨 이상이어야 레벨업 창에 스트라이브 \"배우기\" 버튼이 뜹니다."
+      },
+      "GuiltyGearMeleeMoveNames": {
+        "Name": "접근전 액션 이름",
+        "Hint": "게이지 획득(판정 결과 7 이상)과 다이어 에클라/라이드 더 라이트닝 발동 조건에 쓸 접근전 액션 이름(콤마로 구분). 캠페인에서 실제로 쓰는 근접 기본 액션 이름을 넣어주세요(예: 백병전)."
+      },
+      "GuiltyGearDefendMoveNames": {
+        "Name": "방어 액션 이름",
+        "Hint": "폴트리스 디펜스가 반응할 \"방어\" 기본 액션 이름(콤마로 구분)."
+      },
+      "GaugeGainMeleeThreshold": {
+        "Name": "게이지 획득 판정 기준치",
+        "Hint": "접근전 판정 결과가 이 값 이상이면 게이지를 1 얻습니다."
+      },
+      "DragonInstallHpPercent": {
+        "Name": "드래곤 인스톨 발동 HP 비율(%)",
+        "Hint": "HP가 최대치의 이 비율 이하(반올림)이고 게이지가 가득 찼을 때 드래곤 인스톨이 자동 발동합니다."
+      }
+    },
+    "GuiltyGear": {
+      "GaugeLabel": "게이지",
+      "Unlocked": "{moves}이(가) 해금되었습니다.",
+      "GaugeGained": "접근전 판정 결과 7 이상! 게이지 +1 (현재 {gauge}/5)",
+      "GaugeGainedFromDamage": "체력이 줄어들어 게이지 +1 (현재 {gauge}/5)",
+      "DragonInstallActivated": "HP가 30% 이하로 떨어지고 게이지가 가득 차 드래곤 인스톨이 발동합니다!",
+      "DragonInstallDeactivated": "HP가 30%를 다시 넘어 드래곤 인스톨이 해제됩니다.",
+      "AdjustGaugeTitle": "게이지 조정",
+      "AdjustGaugeLabel": "게이지 값 (0~{max})",
+      "GaugeBadgeTitle": "클릭해서 게이지를 직접 조정합니다.",
+      "GaugeLabelValue": "게이지 {gauge}/{max}",
+      "DragonInstallOn": "드래곤 인스톨 발동 중",
+      "DragonInstallOff": "드래곤 인스톨 대기 중",
+      "LearnButton": "배우기",
+      "LevelUpSectionTitle": "길티기어/스트라이브",
+      "ParalysisStatusName": "마비",
+      "BonusDamageFlavor": "{move} 추가 피해(+1d8)",
+      "ApplyFullTitle": "선택한 대상에게 전체 피해를 적용합니다.",
+      "ApplyHalfTitle": "선택한 대상에게 절반 피해를 적용합니다.",
+      "ApplyDoubleTitle": "선택한 대상에게 두 배 피해를 적용합니다.",
+      "ParalysisTargetLabel": "마비를 걸 대상",
+      "ParalysisApplied": "{target}에게 마비를 걸었습니다.",
+      "GaugeInsufficient": "{name}의 게이지가 부족합니다(필요: {cost}).",
+      "MeleeFollowUpPrompt": "{move}를 사용하시겠습니까? (게이지 {cost} 소비)",
+      "FaultlessDefensePrompt": "폴트리스 디펜스: 게이지를 몇 점 쓰시겠습니까? (0~{gauge}, 쓴 만큼 예비 획득)",
+      "FaultlessDefenseApplied": "폴트리스 디펜스로 게이지 {spend}점을 써서 예비 {spend}점을 추가로 얻었습니다."
+    }
   }
 }

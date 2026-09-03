@@ -1,5 +1,68 @@
 {
   "NOMALS_DW_HOMEBREW": {
-    "MissingDependencyWarning": "Nomal's DW Homebrew Automation: the required dw-automation module is not active, so this module can't do anything."
+    "MissingDependencyWarning": "Nomal's DW Homebrew Automation: the required dw-automation module is not active, so this module can't do anything.",
+    "Confirm": "Confirm",
+    "Cancel": "Cancel",
+    "Settings": {
+      "EnableGuiltyGear": {
+        "Name": "Enable Guilty Gear/Strive automation",
+        "Hint": "Enables the gauge, Stun Edge/Dire Eclair/Faultless Defense, and Strive-tier (Sacred Edge/Ride the Lightning/Dragon Install) automation."
+      },
+      "GuiltyGearMoveNames": {
+        "Name": "Guilty Gear move name(s)",
+        "Hint": "Move name(s) (comma-separated) recognized by the level-up \"Learn\" button and the unlock logic."
+      },
+      "StriveMoveNames": {
+        "Name": "Strive move name(s)",
+        "Hint": "Move name(s) (comma-separated) recognized by the level-up \"Learn\" button and the unlock logic."
+      },
+      "StriveRequiredLevel": {
+        "Name": "Strive required level",
+        "Hint": "Minimum character level for the Strive \"Learn\" button to appear in the level-up dialog."
+      },
+      "GuiltyGearMeleeMoveNames": {
+        "Name": "Melee move name(s)",
+        "Hint": "Move name(s) (comma-separated) used for gauge gain (roll of 7+) and for triggering Dire Eclair/Ride the Lightning. Enter the actual basic melee move name(s) used in your campaign."
+      },
+      "GuiltyGearDefendMoveNames": {
+        "Name": "Defend move name(s)",
+        "Hint": "Move name(s) (comma-separated) that Faultless Defense reacts to."
+      },
+      "GaugeGainMeleeThreshold": {
+        "Name": "Gauge gain roll threshold",
+        "Hint": "Gain 1 gauge when a melee move roll total is at or above this value."
+      },
+      "DragonInstallHpPercent": {
+        "Name": "Dragon Install HP percent",
+        "Hint": "Dragon Install auto-activates when HP is at or below this percent of max (rounded) and gauge is full."
+      }
+    },
+    "GuiltyGear": {
+      "GaugeLabel": "Gauge",
+      "Unlocked": "{moves} unlocked.",
+      "GaugeGained": "Melee roll of 7+! Gauge +1 (now {gauge}/5)",
+      "GaugeGainedFromDamage": "Took damage: Gauge +1 (now {gauge}/5)",
+      "DragonInstallActivated": "HP dropped to 30% or below with a full gauge — Dragon Install activates!",
+      "DragonInstallDeactivated": "HP rose back above 30% — Dragon Install deactivates.",
+      "AdjustGaugeTitle": "Adjust Gauge",
+      "AdjustGaugeLabel": "Gauge value (0-{max})",
+      "GaugeBadgeTitle": "Click to manually adjust the gauge.",
+      "GaugeLabelValue": "Gauge {gauge}/{max}",
+      "DragonInstallOn": "Dragon Install active",
+      "DragonInstallOff": "Dragon Install inactive",
+      "LearnButton": "Learn",
+      "LevelUpSectionTitle": "Guilty Gear / Strive",
+      "ParalysisStatusName": "Paralyzed",
+      "BonusDamageFlavor": "{move} bonus damage (+1d8)",
+      "ApplyFullTitle": "Apply full damage to the selected target.",
+      "ApplyHalfTitle": "Apply half damage to the selected target.",
+      "ApplyDoubleTitle": "Apply double damage to the selected target.",
+      "ParalysisTargetLabel": "Target to paralyze",
+      "ParalysisApplied": "Paralyzed {target}.",
+      "GaugeInsufficient": "{name} doesn't have enough gauge (needs {cost}).",
+      "MeleeFollowUpPrompt": "Use {move}? (costs {cost} gauge)",
+      "FaultlessDefensePrompt": "Faultless Defense: how much gauge do you want to spend? (0-{gauge}, gained as reserve 1:1)",
+      "FaultlessDefenseApplied": "Spent {spend} gauge on Faultless Defense for +{spend} reserve."
+    }
   }
 }

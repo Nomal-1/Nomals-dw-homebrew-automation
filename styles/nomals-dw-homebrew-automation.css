@@ -1,2 +1,25 @@
-/* 아직 커스텀 액션이 없어 비어있다. dw-automation의 styles/dw-automation.css와
-   같은 방식으로, 새 배지/토글 등을 추가할 때 여기에 규칙을 더한다. */
+/* dw-automation의 배지 스타일 관례(styles/dw-automation.css)를 그대로 따른다:
+   클릭 가능한 배지는 커서 포인터 + hover 시 밝기 강조, "켜진" 상태는 파란
+   배경으로 강조한다. */
+.dwauto-guilty-gear-gauge-badge {
+  cursor: pointer;
+}
+
+.dwauto-guilty-gear-gauge-badge:hover {
+  filter: brightness(1.2);
+}
+
+.dwauto-guilty-gear-gauge-on {
+  background: #2e5a7a !important;
+  color: #fff !important;
+}
+
+.dwauto-dragon-install-badge {
+  opacity: 0.7;
+}
+
+.dwauto-dragon-install-on {
+  background: #b23a3a !important;
+  color: #fff !important;
+  opacity: 1;
+}
