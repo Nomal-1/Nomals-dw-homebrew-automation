@@ -1,0 +1,57 @@
+{
+  "id": "nomals-dw-homebrew-automation",
+  "title": "Nomal's DW 홈브루 자동화",
+  "description": "던전월드(Dungeon World)에서 이 GM의 실제 캠페인이 쓰는 커스텀(홈브루) 액션 전용 자동화 모듈입니다. 공식 액션 자동화는 필수 모듈인 dw-automation이 담당하고, 이 모듈은 그 위에서 커스텀 액션만 다룹니다.",
+  "version": "0.1.0",
+  "socket": true,
+  "compatibility": {
+    "minimum": "12",
+    "verified": "12.331"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dungeonworld",
+        "type": "system",
+        "compatibility": {
+          "minimum": "1.8.0"
+        }
+      }
+    ],
+    "requires": [
+      {
+        "id": "dw-automation",
+        "type": "module",
+        "compatibility": { "minimum": "0.115.2" },
+        "reason": "공용 유틸(무브 카드 파싱, 선택지 다이얼로그, 채팅 알림 등)을 dw-automation이 노출하는 API로 가져다 씁니다. 매니페스트 링크: https://github.com/Nomal-1/dw-automation/releases/latest/download/module.json"
+      },
+      {
+        "id": "lib-wrapper",
+        "type": "module",
+        "compatibility": {}
+      },
+      {
+        "id": "dungeonworld-ko",
+        "type": "module",
+        "compatibility": {},
+        "reason": "이 모듈의 UI와 자동화 문구가 한국어 전용으로 만들어져 있습니다. 매니페스트 링크: https://github.com/Nomal-1/t2/releases/latest/download/module.json"
+      }
+    ]
+  },
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "styles": [
+    "styles/nomals-dw-homebrew-automation.css"
+  ],
+  "languages": [
+    { "lang": "ko", "name": "한국어", "path": "lang/ko.json" },
+    { "lang": "en", "name": "English", "path": "lang/en.json" }
+  ],
+  "authors": [
+    { "name": "Nomal" }
+  ],
+  "url": "https://github.com/Nomal-1/Nomals-dw-homebrew-automation",
+  "manifest": "https://github.com/Nomal-1/Nomals-dw-homebrew-automation/releases/latest/download/module.json",
+  "download": "https://github.com/Nomal-1/Nomals-dw-homebrew-automation/releases/latest/download/module.zip"
+}

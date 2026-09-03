@@ -1,0 +1,5 @@
+{
+  "NOMALS_DW_HOMEBREW": {
+    "MissingDependencyWarning": "Nomal's DW Homebrew Automation: the required dw-automation module is not active, so this module can't do anything."
+  }
+}
