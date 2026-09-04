@@ -227,6 +227,13 @@ function onCreateChatMessageMeleeFollowUp(message, options, userId) {
   if (!meleeNames.includes(title)) return;
 
   (async () => {
+    // dw-automation의 attack-assistant.js도 같은 채팅 메시지를 보고 "정말
+    // 무기로 데미지를 굴리시겠습니까?" 확인창을 독립적으로 띄운다. 그쪽
+    // 내부 콜백에 걸 방법이 없어서 "답할 때까지 정확히 기다리기"는 불가능
+    // 하지만, 우리 확인창을 살짝 늦춰서 그쪽이 먼저 화면에 뜨고 포커스를
+    // 잡게 한다 — 두 확인창이 동시에 겹쳐 뜨는 것보다 훨씬 자연스럽다.
+    await new Promise((resolve) => setTimeout(resolve, 600));
+
     const { flavor, cost } = await resolveMeleeFlavor(actor);
     if (!flavor) return;
 
