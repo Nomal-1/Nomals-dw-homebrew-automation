@@ -2,7 +2,7 @@
   "id": "nomals-dw-homebrew-automation",
   "title": "Nomal's DW 홈브루 자동화",
   "description": "던전월드(Dungeon World)에서 이 GM의 실제 캠페인이 쓰는 커스텀(홈브루) 액션 전용 자동화 모듈입니다. 공식 액션 자동화는 필수 모듈인 dw-automation이 담당하고, 이 모듈은 그 위에서 커스텀 액션만 다룹니다.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "socket": true,
   "compatibility": {
     "minimum": "12",

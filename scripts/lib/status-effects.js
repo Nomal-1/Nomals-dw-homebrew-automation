@@ -119,11 +119,31 @@ export async function applyParalysis(actor) {
   if (isParalyzed(actor)) return;
   await actor.toggleStatusEffect(STATUS_ID, { active: true });
   await maybePlayFlourish(actor);
-  await applyTokenMagicParalysis(actor);
 }
 
 export async function clearParalysis(actor) {
   if (!isParalyzed(actor)) return;
   await actor.toggleStatusEffect(STATUS_ID, { active: false });
-  await clearTokenMagicParalysis(actor);
+}
+
+// GM이 토큰 HUD에서 마비 아이콘을 직접 눌러서 끄는 등, 이 모듈의 clearParalysis()를
+// 거치지 않는 경로로 상태가 지워질(또는 걸릴) 수도 있다. 그래서 Token Magic FX
+// 필터의 적용/해제는 createActiveEffect/deleteActiveEffect 훅에서 한 곳으로
+// 통일해 처리한다 - HUD로 껐든 이 모듈이 코드로 껐든 항상 발광도 같이 사라진다.
+function isParalysisEffect(effect) {
+  return Boolean(effect.statuses?.has(STATUS_ID));
+}
+
+export function registerParalysisTokenMagicSync() {
+  Hooks.on("createActiveEffect", (effect) => {
+    if (!isParalysisEffect(effect)) return;
+    const actor = effect.parent;
+    if (actor instanceof Actor) applyTokenMagicParalysis(actor);
+  });
+
+  Hooks.on("deleteActiveEffect", (effect) => {
+    if (!isParalysisEffect(effect)) return;
+    const actor = effect.parent;
+    if (actor instanceof Actor) clearTokenMagicParalysis(actor);
+  });
 }

@@ -1,7 +1,7 @@
 import { registerSettings } from "./settings.js";
 import { registerGuiltyGearCore } from "./features/guilty-gear-core.js";
 import { registerGuiltyGearAttacks, registerGuiltyGearRollGate } from "./features/guilty-gear-attacks.js";
-import { registerParalysisStatusEffect } from "./lib/status-effects.js";
+import { registerParalysisStatusEffect, registerParalysisTokenMagicSync } from "./lib/status-effects.js";
 import { registerPendingDamageBonusConsumer } from "./lib/pending-damage-bonus.js";
 import { registerSettingsTabs } from "./lib/settings-tabs.js";
 
@@ -42,3 +42,4 @@ Hooks.once("ready", () => {
 registerGuiltyGearCore();
 registerGuiltyGearAttacks();
 registerPendingDamageBonusConsumer();
+registerParalysisTokenMagicSync();
