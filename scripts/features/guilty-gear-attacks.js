@@ -74,7 +74,7 @@ async function rollBonusDamage(actor, moveName, target) {
   await ChatMessage.create(chatData);
 }
 
-async function applyParalysisWithTarget(actor, moveName, { rollBonus = false, pendingBonus = false } = {}) {
+async function applyParalysisWithTarget(actor, moveName, { rollBonus = false } = {}) {
   const target = await promptActorTarget(actor, {
     title: moveName,
     label: game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.ParalysisTargetLabel"),
@@ -88,9 +88,6 @@ async function applyParalysisWithTarget(actor, moveName, { rollBonus = false, pe
 
   if (rollBonus) {
     await rollBonusDamage(actor, moveName, target);
-  } else if (pendingBonus) {
-    await grantPendingWeaponDamageBonus(actor, "1d8");
-    announceActionApplied(actor, moveName, game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.PendingDamageBonusApplied"));
   }
 }
 
@@ -164,54 +161,43 @@ function onCreateChatMessageRangedResult(message, options, userId) {
   }
 }
 
-// 라이드 더 라이트닝(있고 게이지가 되면 항상 물어봄, 토글 없음) → (아니오/
-// 불가면) 다이어 에클라(DIRE_ECLAIR_ASK_MODE_FLAG 토글에 따름) 순서로
-// 캐스케이드 확인한다. 라이드 더 라이트닝을 쓰면 이어서 굴릴 "기본 접근전
-// 데미지"에 +1d8을 예약한다(별도 굴림 없음).
-async function resolveMeleeFlavor(actor) {
-  const hasRideTheLightning = actor.items.some((i) => i.type === "move" && i.name === RIDE_THE_LIGHTNING_MOVE_NAME);
-  if (hasRideTheLightning) {
-    const rideCost = getEnhancedTechniqueCost(actor, BASE_GAUGE_COST);
-    if (rideCost <= 0 || getGauge(actor) >= rideCost) {
-      const confirmed = await Dialog.confirm({
-        title: RIDE_THE_LIGHTNING_MOVE_NAME,
-        content: `<p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.MeleeFollowUpPrompt", { move: RIDE_THE_LIGHTNING_MOVE_NAME, cost: rideCost })}</p>`,
-        defaultYes: false
-      });
-      if (confirmed) return { flavor: "ride", cost: rideCost };
-    }
-  }
+// ---- 다이어 에클라/라이드 더 라이트닝: dw-automation의 "어떤 무기를 쓸
+// 거냐" 대화상자(features/attack-assistant.js의 promptWeaponChoice) 안에
+// 드롭다운을 하나 끼워넣는다. 그 대화상자 자체는 내부 함수가 만드는 거라
+// 직접 못 건드리지만, 다 그려진 뒤(renderDialog 훅)에 DOM에 필드를
+// 추가하는 건 가능하다(레벨업 창에 "배우기" 섹션을 끼워넣는 것과 같은
+// 패턴 — features/guilty-gear-core.js의 injectLevelUpSection 참고).
+// "정말 데미지를 굴리시겠습니까?" 확인창과 별개 채팅 프롬프트로 경쟁하던
+// 이전 방식(v0.2.4까지) 대신, 이미 뜨는 그 대화상자 안에서 고르게 하면
+// dw-automation의 확인 흐름과 순서가 자연히 맞아떨어진다.
+//
+// 어느 액터의 무기 선택 창인지는 대화상자 자체엔 표시가 없어서, 드롭다운의
+// 첫 무기 <option>의 아이템 id로 소유 액터를 역으로 찾는다. "이 창이
+// 길티기어 접근전 후속 선택 대상인지"는 별도로 판단한다 — 접근전 판정
+// 채팅 카드가 뜬 순간 그 액터를 짧게(15초) "대기 중"으로 표시해뒀다가,
+// 실제로 무기 선택 창이 뜨면 그 표시를 소모한다. 이렇게 해야 사격(Volley)
+// 같은 무관한 무기 굴림에는 드롭다운이 안 뜬다.
+const meleeDialogEligible = new Map(); // actorId -> setTimeout 핸들
 
-  const hasDireEclair = actor.items.some((i) => i.type === "move" && i.name === DIRE_ECLAIR_MOVE_NAME);
-  if (!hasDireEclair) return { flavor: null, cost: 0 };
-
-  const mode = getAskMode(actor, DIRE_ECLAIR_ASK_MODE_FLAG, "ask");
-  if (mode === "never") return { flavor: null, cost: 0 };
-
-  const eclairCost = getBaseTechniqueCost(actor, BASE_GAUGE_COST);
-
-  if (mode === "ask") {
-    const confirmed = await Dialog.confirm({
-      title: DIRE_ECLAIR_MOVE_NAME,
-      content: `<p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.MeleeFollowUpPrompt", { move: DIRE_ECLAIR_MOVE_NAME, cost: eclairCost })}</p>`,
-      defaultYes: false
-    });
-    if (!confirmed) return { flavor: null, cost: 0 };
-    if (eclairCost > 0 && getGauge(actor) < eclairCost) {
-      ui.notifications.warn(game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.GaugeInsufficient", { name: actor.name, cost: eclairCost }));
-      return { flavor: null, cost: 0 };
-    }
-    return { flavor: "eclair", cost: eclairCost };
-  }
-
-  // mode === "always": 묻지 않고 게이지만 되면 바로 적용.
-  if (eclairCost > 0 && getGauge(actor) < eclairCost) return { flavor: null, cost: 0 };
-  return { flavor: "eclair", cost: eclairCost };
+function markMeleeDialogEligible(actor) {
+  const existing = meleeDialogEligible.get(actor.id);
+  if (existing) clearTimeout(existing);
+  const timeout = setTimeout(() => meleeDialogEligible.delete(actor.id), 15000);
+  meleeDialogEligible.set(actor.id, timeout);
 }
 
-// ---- 다이어 에클라/라이드 더 라이트닝: 접근전 액션이 실패하지 않았을 때
-// (성공/부분성공) 발동한다. ----
-function onCreateChatMessageMeleeFollowUp(message, options, userId) {
+function consumeMeleeDialogEligible(actorId) {
+  const existing = meleeDialogEligible.get(actorId);
+  if (!existing) return false;
+  clearTimeout(existing);
+  meleeDialogEligible.delete(actorId);
+  return true;
+}
+
+// 접근전 판정이 성공/부분성공이고, 이 액터가 라이드 더 라이트닝이나
+// 다이어 에클라를 갖고 있으면 "다음 무기 선택 창에 드롭다운을 끼워넣어도
+// 되는" 상태로 표시해둔다.
+function onCreateChatMessageMeleeJudgment(message, options, userId) {
   if (game.system.id !== "dungeonworld") return;
   if (!isGuiltyGearEnabled()) return;
   if (userId !== game.user.id) return;
@@ -226,25 +212,118 @@ function onCreateChatMessageMeleeFollowUp(message, options, userId) {
   const meleeNames = splitCommaList(SETTINGS.GUILTY_GEAR_MELEE_MOVE_NAMES);
   if (!meleeNames.includes(title)) return;
 
-  (async () => {
-    // dw-automation의 attack-assistant.js도 같은 채팅 메시지를 보고 "정말
-    // 무기로 데미지를 굴리시겠습니까?" 확인창을 독립적으로 띄운다. 그쪽
-    // 내부 콜백에 걸 방법이 없어서 "답할 때까지 정확히 기다리기"는 불가능
-    // 하지만, 우리 확인창을 살짝 늦춰서 그쪽이 먼저 화면에 뜨고 포커스를
-    // 잡게 한다 — 두 확인창이 동시에 겹쳐 뜨는 것보다 훨씬 자연스럽다.
-    await new Promise((resolve) => setTimeout(resolve, 600));
+  const hasRide = actor.items.some((i) => i.type === "move" && i.name === RIDE_THE_LIGHTNING_MOVE_NAME);
+  const hasDireEclair = actor.items.some((i) => i.type === "move" && i.name === DIRE_ECLAIR_MOVE_NAME);
+  if (!hasRide && !hasDireEclair) return;
 
-    const { flavor, cost } = await resolveMeleeFlavor(actor);
-    if (!flavor) return;
+  markMeleeDialogEligible(actor);
+}
 
-    if (cost > 0) await trySpendGauge(actor, cost);
+function findActorFromWeaponDialog(html) {
+  const itemId = html.find('select[name="weapon"] option').first().val();
+  if (!itemId) return null;
+  return game.actors.find((a) => a.items.get(itemId)) ?? null;
+}
 
-    const moveName = flavor === "ride" ? RIDE_THE_LIGHTNING_MOVE_NAME : DIRE_ECLAIR_MOVE_NAME;
-    await applyParalysisWithTarget(actor, moveName, { pendingBonus: flavor === "ride" });
-  })();
+// 다이어 에클라 토글(DIRE_ECLAIR_ASK_MODE_FLAG)의 의미를 드롭다운 기본값에
+// 맞게 재해석한다: "항상 미적용"이면 다이어 에클라 자체를 선택지에서 뺀다
+// (라이드 더 라이트닝은 이 토글과 무관하게 항상 후보). "항상 적용"이면
+// 드롭다운을 열었을 때부터 라이드 더 라이트닝(있으면)이나 다이어 에클라가
+// 미리 선택돼 있다(그래도 "사용 안 함"으로 직접 바꿀 수 있다). "매번
+// 묻기"(기본값)면 "사용 안 함"이 기본 선택이라 직접 골라야 한다.
+function buildMeleeFlavorOptions(actor) {
+  const options = [`<option value="none">${game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.MeleeFlavorNone")}</option>`];
+
+  const hasRide = actor.items.some((i) => i.type === "move" && i.name === RIDE_THE_LIGHTNING_MOVE_NAME);
+  if (hasRide) options.push(`<option value="ride">${RIDE_THE_LIGHTNING_MOVE_NAME}</option>`);
+
+  const hasDireEclair = actor.items.some((i) => i.type === "move" && i.name === DIRE_ECLAIR_MOVE_NAME);
+  const eclairMode = getAskMode(actor, DIRE_ECLAIR_ASK_MODE_FLAG, "ask");
+  const eclairAvailable = hasDireEclair && eclairMode !== "never";
+  if (eclairAvailable) options.push(`<option value="eclair">${DIRE_ECLAIR_MOVE_NAME}</option>`);
+
+  let defaultValue = "none";
+  if (eclairMode === "always") {
+    if (hasRide) defaultValue = "ride";
+    else if (eclairAvailable) defaultValue = "eclair";
+  }
+
+  return { optionsHtml: options.join(""), hasRide, eclairAvailable, defaultValue };
+}
+
+async function commitMeleeFlavor(actor, flavor) {
+  const cost = flavor === "ride" ? getEnhancedTechniqueCost(actor, BASE_GAUGE_COST) : getBaseTechniqueCost(actor, BASE_GAUGE_COST);
+  if (cost > 0 && getGauge(actor) < cost) {
+    ui.notifications.warn(game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.GaugeInsufficient", { name: actor.name, cost }));
+    return false;
+  }
+
+  if (cost > 0) await trySpendGauge(actor, cost);
+  if (flavor === "ride") {
+    await grantPendingWeaponDamageBonus(actor, "1d8");
+    announceActionApplied(actor, RIDE_THE_LIGHTNING_MOVE_NAME, game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.PendingDamageBonusApplied"));
+  }
+
+  const moveName = flavor === "ride" ? RIDE_THE_LIGHTNING_MOVE_NAME : DIRE_ECLAIR_MOVE_NAME;
+  await applyParalysisWithTarget(actor, moveName, { rollBonus: false });
+  return true;
+}
+
+function injectMeleeFlavorSelect(html, actor) {
+  if (html.find('[name="dwautoGuiltyGearMeleeFlavor"]').length) return; // 이미 끼워넣음(중복 렌더 방지)
+
+  const { optionsHtml, hasRide, eclairAvailable, defaultValue } = buildMeleeFlavorOptions(actor);
+  if (!hasRide && !eclairAvailable) return; // 보여줄 선택지가 없음
+
+  const $group = $(`
+    <div class="form-group dwauto-guilty-gear-melee-flavor-group">
+      <label>${game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.MeleeFlavorLabel")}</label>
+      <select name="dwautoGuiltyGearMeleeFlavor">${optionsHtml}</select>
+    </div>
+  `);
+  const $select = $group.find("select");
+  $select.val(defaultValue);
+
+  const $modGroup = html.find('[name="mod"]').closest(".form-group");
+  if ($modGroup.length) $modGroup.after($group);
+  else html.find("form").append($group);
+
+  // 한 번 정해지면(사용 안 함이 아닌 걸 고르면) 그 자리에서 바로
+  // 게이지/데미지 보정을 적용하고 드롭다운을 잠근다 — 나중에 "롤" 버튼을
+  // 누르는 시점과 완전히 분리해서, 언제 눌러도(또는 아예 안 눌러도) 이미
+  // 반영된 상태를 유지한다. 실패(게이지 부족)하면 "사용 안 함"으로 되돌린다.
+  let committed = false;
+  $select.on("change", async (event) => {
+    if (committed) return;
+    const flavor = event.currentTarget.value;
+    if (flavor === "none") return;
+
+    committed = true;
+    $select.prop("disabled", true);
+
+    const applied = await commitMeleeFlavor(actor, flavor);
+    if (!applied) {
+      $select.prop("disabled", false);
+      $select.val("none");
+      committed = false;
+    }
+  });
+}
+
+function onRenderDialog(app, html) {
+  if (game.system.id !== "dungeonworld") return;
+  if (!isGuiltyGearEnabled()) return;
+  if (!html.find('select[name="weapon"]').length || !html.find('input[name="mod"]').length) return;
+
+  const actor = findActorFromWeaponDialog(html);
+  if (!actor) return;
+  if (!consumeMeleeDialogEligible(actor.id)) return;
+
+  injectMeleeFlavorSelect(html, actor);
 }
 
 export function registerGuiltyGearAttacks() {
   Hooks.on("createChatMessage", onCreateChatMessageRangedResult);
-  Hooks.on("createChatMessage", onCreateChatMessageMeleeFollowUp);
+  Hooks.on("createChatMessage", onCreateChatMessageMeleeJudgment);
+  Hooks.on("renderDialog", onRenderDialog);
 }
