@@ -15,7 +15,6 @@ import {
   setDragonInstallActive,
   getAskMode,
   cycleAskMode,
-  STUN_EDGE_ASK_MODE_FLAG,
   DIRE_ECLAIR_ASK_MODE_FLAG
 } from "../lib/guilty-gear-state.js";
 import {
@@ -26,7 +25,6 @@ import {
   GUILTY_GEAR_UNLOCK_ITEMS,
   STRIVE_UNLOCK_ITEMS,
   DRAGON_INSTALL_MOVE_NAME,
-  STUN_EDGE_MOVE_NAME,
   DIRE_ECLAIR_MOVE_NAME
 } from "../data/guilty-gear-items.js";
 
@@ -287,14 +285,6 @@ function onRenderActorSheet(app, html) {
         `<a class="tag dwauto-dragon-install-badge${active ? " dwauto-dragon-install-on" : ""}">${game.i18n.localize(active ? "NOMALS_DW_HOMEBREW.GuiltyGear.DragonInstallOn" : "NOMALS_DW_HOMEBREW.GuiltyGear.DragonInstallOff")}</a>`
       );
       $tags.append($badge);
-    }
-  }
-
-  const stunEdgeItem = actor.items.find((i) => i.type === "move" && i.name === STUN_EDGE_MOVE_NAME);
-  if (stunEdgeItem) {
-    const $item = html.find(`.item[data-item-id="${stunEdgeItem.id}"]`);
-    if ($item.length) {
-      appendAskModeBadge($item, actor, STUN_EDGE_ASK_MODE_FLAG, "always", "dwauto-guilty-gear-stun-edge-askmode-badge");
     }
   }
 

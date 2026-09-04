@@ -110,12 +110,10 @@ export function getEnhancedTechniqueCost(actor, baseCost) {
   return isDragonInstallActive(actor) ? 0 : baseCost;
 }
 
-// 스턴엣지/다이어 에클라 옆 배지에서 클릭으로 순환시키는 3단계 모드.
-//   "always" — 묻지 않고 게이지만 되면 자동 적용(예전 기본 동작)
-//   "ask"    — 매번 사용할지 Y/N으로 물어봄
-//   "never"  — 항상 미적용, 효과 자체를 안 씀(평범한 판정/굴림으로만 진행)
-// 액터마다, 기능마다(스턴엣지/다이어 에클라 따로) 별도 플래그 키로 저장한다.
-export const STUN_EDGE_ASK_MODE_FLAG = "stunEdgeAskMode";
+// 다이어 에클라 옆 배지에서 클릭으로 순환시키는 3단계 모드.
+//   "always" — 묻지 않고 게이지만 되면 자동 적용
+//   "ask"    — 매번 사용할지 Y/N으로 물어봄(기본값)
+//   "never"  — 항상 미적용, 효과 자체를 안 씀
 export const DIRE_ECLAIR_ASK_MODE_FLAG = "direEclairAskMode";
 const ASK_MODE_ORDER = ["always", "ask", "never"];
 
