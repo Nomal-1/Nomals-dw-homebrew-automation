@@ -23,8 +23,8 @@
       {
         "id": "dw-automation",
         "type": "module",
-        "compatibility": { "minimum": "0.115.2" },
-        "reason": "공용 유틸(무브 카드 파싱, 선택지 다이얼로그, 채팅 알림 등)을 dw-automation이 노출하는 API로 가져다 씁니다. 매니페스트 링크: https://github.com/Nomal-1/dw-automation/releases/latest/download/module.json"
+        "compatibility": { "minimum": "0.116.0" },
+        "reason": "공용 유틸(무브 카드 파싱, 선택지 다이얼로그, 채팅 알림 등)을 dw-automation이 노출하는 API(game.modules.get(\"dw-automation\").api)로 가져다 씁니다. 0.115.2에는 이 API 노출 기능이 없어서 0.116.0 이상이 실제로 필요합니다. 매니페스트 링크: https://github.com/Nomal-1/dw-automation/releases/latest/download/module.json"
       },
       {
         "id": "lib-wrapper",
