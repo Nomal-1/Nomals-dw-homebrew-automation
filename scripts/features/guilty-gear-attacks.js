@@ -7,9 +7,16 @@
 // 사격/근접 무브 이름 설정에 애초에 안 걸려서 그 확인창이 뜨지 않는다.
 // 판정 UI(2d6+민첩)와 성공/부분성공/실패 카드 구조는 "사격"과 완전히
 // 동일하다 — 시스템 자체의 무브 굴림 경로를 그대로 타기 때문.
+//
+// 스턴엣지/세이크리드 엣지 둘 중 어느 아이템을 클릭해도 같은 캐스케이드
+// 확인(세이크리드 엣지 → 스턴엣지)을 타고, 실제로 무엇이 발동했는지는
+// 클릭한 아이템 이름이 아니라 굴리기 직전에 남겨둔 PENDING_RANGED_FLAVOR_FLAG로
+// 판단한다(판정 결과 채팅 카드의 제목은 여전히 "클릭한 아이템 이름" 그대로라
+// 실제 발동 내역과 다를 수 있기 때문).
 import { MODULE_ID, SETTINGS } from "../constants.js";
 import { getMoveCardInfo, announceActionApplied, promptActorTarget } from "../lib/dw-api.js";
 import { applyParalysis } from "../lib/status-effects.js";
+import { grantPendingWeaponDamageBonus } from "../lib/pending-damage-bonus.js";
 import { promptFaultlessDefenseBonus } from "./guilty-gear-defense.js";
 import {
   isGuiltyGearEnabled,
@@ -18,7 +25,10 @@ import {
   getGauge,
   trySpendGauge,
   getBaseTechniqueCost,
-  getEnhancedTechniqueCost
+  getEnhancedTechniqueCost,
+  getAskMode,
+  STUN_EDGE_ASK_MODE_FLAG,
+  DIRE_ECLAIR_ASK_MODE_FLAG
 } from "../lib/guilty-gear-state.js";
 import {
   STUN_EDGE_MOVE_NAME,
@@ -28,43 +38,11 @@ import {
 } from "../data/guilty-gear-items.js";
 
 const BASE_GAUGE_COST = 3;
+const PENDING_RANGED_FLAVOR_FLAG = "pendingRangedFlavor";
 
-// 대상 토큰을 실제로 타겟팅해둔다 — 던전월드 시스템의 데미지 적용 버튼
-// (전체/절반/두배)이 game.user.targets를 보고 동작하므로, 이 버튼이 바로
-// 먹히게 하려면 우리가 고른 대상을 미리 타겟팅해줘야 한다.
 function focusTarget(targetActor) {
   const token = targetActor.getActiveTokens()[0];
   if (token) token.setTarget(true, { releaseOthers: true });
-}
-
-// 세이크리드 엣지/라이드 더 라이트닝의 "마비 성공 시 +1d8" 보너스 피해.
-// 무기 데미지가 아니라 그냥 고정 주사위라 attack-assistant.js의 rollDamage처럼
-// 태그/무기 선택 없이 단순하게 굴리고, 같은 전체/절반/두배/치유 버튼을
-// 그대로 붙여서 시스템의 기존 데미지 적용 흐름을 그대로 탄다.
-async function rollBonusDamage(actor, moveName, target) {
-  const roll = new Roll("1d8", actor.getRollData());
-  await roll.evaluate();
-
-  focusTarget(target);
-
-  const rollHtml = await roll.render();
-  const content = `
-    <h3>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.BonusDamageFlavor", { move: moveName })}</h3>
-    ${rollHtml}
-    <div class="chat-damage-buttons">
-      <button type="button" class="button damage full-damage" data-action="damage" title="${game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.ApplyFullTitle")}"><i class="fas fa-user-minus"></i></button>
-      <button type="button" class="button damage half-damage" data-action="half-damage" title="${game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.ApplyHalfTitle")}"><i class="fas fa-user-minus"></i> 1/2</button>
-      <button type="button" class="button damage double-damage" data-action="double-damage" title="${game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.ApplyDoubleTitle")}"><i class="fas fa-user-minus"></i> 2X</button>
-    </div>
-  `;
-
-  const chatData = { user: game.user.id, speaker: ChatMessage.getSpeaker({ actor }), content };
-  if (game.dice3d) {
-    await game.dice3d.showForRoll(roll, game.user, true, null, false);
-  } else {
-    chatData.sound = CONFIG.sounds.dice;
-  }
-  await ChatMessage.create(chatData);
 }
 
 async function applyParalysisWithTarget(actor, moveName, { rollBonus = false } = {}) {
@@ -75,12 +53,53 @@ async function applyParalysisWithTarget(actor, moveName, { rollBonus = false } =
   });
   if (!target) return;
 
+  focusTarget(target);
   await applyParalysis(target);
   announceActionApplied(actor, moveName, game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.ParalysisApplied", { target: target.name }));
 
   if (rollBonus) {
-    await rollBonusDamage(actor, moveName, target);
+    await grantPendingWeaponDamageBonus(actor, "1d8");
+    announceActionApplied(actor, moveName, game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.PendingDamageBonusApplied"));
   }
+}
+
+// 세이크리드 엣지 → (아니오면) 스턴엣지 순서로 캐스케이드 확인한다. 세이크리드
+// 엣지는 갖고 있고 게이지가 되면 항상 물어본다(토글 없음). 스턴엣지는
+// STUN_EDGE_ASK_MODE_FLAG(항상 적용/매번 묻기/항상 미적용)를 따른다. 어느
+// 쪽도 안 쓰기로 하면 { flavor: null }을 돌려줘서 평범한 판정으로만 흘러가게
+// 한다.
+async function resolveRangedFlavor(actor) {
+  const hasSacred = actor.items.some((i) => i.type === "move" && i.name === SACRED_EDGE_MOVE_NAME);
+  if (hasSacred) {
+    const sacredCost = getEnhancedTechniqueCost(actor, BASE_GAUGE_COST);
+    if (sacredCost <= 0 || getGauge(actor) >= sacredCost) {
+      const confirmed = await Dialog.confirm({
+        title: SACRED_EDGE_MOVE_NAME,
+        content: `<p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.RangedFlavorPrompt", { move: SACRED_EDGE_MOVE_NAME, cost: sacredCost })}</p>`,
+        defaultYes: false
+      });
+      if (confirmed) return { flavor: "sacred", cost: sacredCost };
+    }
+  }
+
+  const mode = getAskMode(actor, STUN_EDGE_ASK_MODE_FLAG, "always");
+  if (mode === "never") return { flavor: null, cost: 0 };
+
+  const stunCost = getBaseTechniqueCost(actor, BASE_GAUGE_COST);
+
+  if (mode === "ask") {
+    if (stunCost > 0 && getGauge(actor) < stunCost) return { flavor: null, cost: 0 };
+    const confirmed = await Dialog.confirm({
+      title: STUN_EDGE_MOVE_NAME,
+      content: `<p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.RangedFlavorPrompt", { move: STUN_EDGE_MOVE_NAME, cost: stunCost })}</p>`,
+      defaultYes: false
+    });
+    return confirmed ? { flavor: "stun", cost: stunCost } : { flavor: null, cost: 0 };
+  }
+
+  // mode === "always": 묻지 않고 게이지만 되면 바로 적용.
+  if (stunCost > 0 && getGauge(actor) < stunCost) return { flavor: null, cost: 0 };
+  return { flavor: "stun", cost: stunCost };
 }
 
 // ---- 판정 직전 개입 전부를 여기 한 wrappedRoll에 모은다. libWrapper는
@@ -95,21 +114,24 @@ async function wrappedRoll(wrapped, ...args) {
 
   const actor = this.actor;
 
-  // 스턴엣지/세이크리드 엣지: 게이지 소비 게이트. 판정 자체는 시스템의
-  // 원래 경로를 그대로 태우고, 굴리기 전에 게이지가 부족하면 아예 판정을
-  // 취소한다(dw-automation의 roll-bypass 패턴과 같은 방식).
-  const isStunEdge = this.name === STUN_EDGE_MOVE_NAME;
-  const isSacredEdge = this.name === SACRED_EDGE_MOVE_NAME;
-  if (isStunEdge || isSacredEdge) {
-    const cost = isStunEdge ? getBaseTechniqueCost(actor, BASE_GAUGE_COST) : getEnhancedTechniqueCost(actor, BASE_GAUGE_COST);
+  // 스턴엣지/세이크리드 엣지: 둘 중 어느 아이템을 클릭해도 같은 캐스케이드로
+  // 물어보고, 실제 발동 내역을 플래그에 남긴다(판정 결과 처리는
+  // onCreateChatMessageRangedResult가 이 플래그를 읽는다).
+  if (this.name === STUN_EDGE_MOVE_NAME || this.name === SACRED_EDGE_MOVE_NAME) {
+    const { flavor, cost } = await resolveRangedFlavor(actor);
 
-    if (cost > 0 && getGauge(actor) < cost) {
-      ui.notifications.warn(game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.GaugeInsufficient", { name: actor.name, cost }));
-      return undefined;
+    if (flavor) {
+      await actor.setFlag(MODULE_ID, PENDING_RANGED_FLAVOR_FLAG, flavor);
+      if (cost > 0) await trySpendGauge(actor, cost);
+    } else {
+      await actor.unsetFlag(MODULE_ID, PENDING_RANGED_FLAVOR_FLAG);
     }
 
-    if (cost > 0) await trySpendGauge(actor, cost);
-    return wrapped(...args);
+    try {
+      return await wrapped(...args);
+    } finally {
+      await actor.unsetFlag(MODULE_ID, PENDING_RANGED_FLAVOR_FLAG);
+    }
   }
 
   // 폴트리스 디펜스: "방어" 판정이면 게이지를 소비한 만큼 이번 판정에
@@ -136,7 +158,8 @@ export function registerGuiltyGearRollGate() {
 }
 
 // ---- 판정 결과 반응: 스턴엣지/세이크리드 엣지가 명중하면(성공/부분성공)
-// 대상을 골라 마비를 건다. 세이크리드 엣지는 추가로 +1d8을 굴린다. ----
+// 대상을 골라 마비를 건다. 세이크리드 엣지는 추가로 다음 무기 데미지
+// 굴림에 +1d8을 예약한다. ----
 function onCreateChatMessageRangedResult(message, options, userId) {
   if (game.system.id !== "dungeonworld") return;
   if (!isGuiltyGearEnabled()) return;
@@ -146,19 +169,23 @@ function onCreateChatMessageRangedResult(message, options, userId) {
   if (!info) return;
   const { actor, title, result } = info;
   if (actor.type !== "character") return;
+  if (title !== STUN_EDGE_MOVE_NAME && title !== SACRED_EDGE_MOVE_NAME) return;
+
+  const flavor = actor.getFlag(MODULE_ID, PENDING_RANGED_FLAVOR_FLAG);
+  actor.unsetFlag(MODULE_ID, PENDING_RANGED_FLAVOR_FLAG); // 한 번 쓰고 정리 — 다음 판정에 안 새게 한다.
+  if (!flavor) return;
   if (result !== "success" && result !== "partial") return;
 
-  if (title === STUN_EDGE_MOVE_NAME) {
-    applyParalysisWithTarget(actor, title, { rollBonus: false });
-  } else if (title === SACRED_EDGE_MOVE_NAME) {
-    applyParalysisWithTarget(actor, title, { rollBonus: true });
-  }
+  const moveName = flavor === "sacred" ? SACRED_EDGE_MOVE_NAME : STUN_EDGE_MOVE_NAME;
+  applyParalysisWithTarget(actor, moveName, { rollBonus: flavor === "sacred" });
 }
 
 // ---- 다이어 에클라/라이드 더 라이트닝: 접근전 액션이 실패하지 않았을 때
 // (성공/부분성공) 사용할지 물어본다. 라이드 더 라이트닝(강화판)을 배웠으면
 // 그쪽을 우선한다 — 같은 발동 조건에 순수 상위호환이라 굳이 기본판을
-// 따로 물어볼 이유가 없다. ----
+// 따로 물어볼 이유가 없다. DIRE_ECLAIR_ASK_MODE_FLAG(기본값 "ask")를
+// 따르고, "ask" 모드일 땐 게이지 상태와 무관하게 항상 물어본 뒤(원하시는
+// 대로) 실제로 쓰겠다고 답했을 때만 게이지 부족 여부를 확인한다. ----
 function onCreateChatMessageMeleeFollowUp(message, options, userId) {
   if (game.system.id !== "dungeonworld") return;
   if (!isGuiltyGearEnabled()) return;
@@ -178,17 +205,26 @@ function onCreateChatMessageMeleeFollowUp(message, options, userId) {
   const hasDireEclair = actor.items.some((i) => i.type === "move" && i.name === DIRE_ECLAIR_MOVE_NAME);
   if (!hasRideTheLightning && !hasDireEclair) return;
 
+  const mode = getAskMode(actor, DIRE_ECLAIR_ASK_MODE_FLAG, "ask");
+  if (mode === "never") return;
+
   const moveName = hasRideTheLightning ? RIDE_THE_LIGHTNING_MOVE_NAME : DIRE_ECLAIR_MOVE_NAME;
   const cost = hasRideTheLightning ? getEnhancedTechniqueCost(actor, BASE_GAUGE_COST) : getBaseTechniqueCost(actor, BASE_GAUGE_COST);
-  if (cost > 0 && getGauge(actor) < cost) return; // 못 쓰는 선택지는 아예 물어보지 않는다.
 
   (async () => {
-    const confirmed = await Dialog.confirm({
-      title: moveName,
-      content: `<p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.MeleeFollowUpPrompt", { move: moveName, cost })}</p>`,
-      defaultYes: false
-    });
-    if (!confirmed) return;
+    if (mode === "ask") {
+      const confirmed = await Dialog.confirm({
+        title: moveName,
+        content: `<p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.MeleeFollowUpPrompt", { move: moveName, cost })}</p>`,
+        defaultYes: false
+      });
+      if (!confirmed) return;
+    }
+
+    if (cost > 0 && getGauge(actor) < cost) {
+      ui.notifications.warn(game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.GaugeInsufficient", { name: actor.name, cost }));
+      return;
+    }
 
     if (cost > 0) await trySpendGauge(actor, cost);
     await applyParalysisWithTarget(actor, moveName, { rollBonus: hasRideTheLightning });

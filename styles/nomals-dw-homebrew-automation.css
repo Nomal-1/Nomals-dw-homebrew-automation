@@ -23,3 +23,18 @@
   color: #fff !important;
   opacity: 1;
 }
+
+.dwauto-guilty-gear-stun-edge-askmode-badge,
+.dwauto-guilty-gear-dire-eclair-askmode-badge {
+  cursor: pointer;
+}
+
+.dwauto-guilty-gear-stun-edge-askmode-badge:hover,
+.dwauto-guilty-gear-dire-eclair-askmode-badge:hover {
+  filter: brightness(1.2);
+}
+
+.dwauto-guilty-gear-askmode-on {
+  background: #6a4c93 !important;
+  color: #fff !important;
+}

@@ -12,7 +12,11 @@ import {
   addGauge,
   ensureGaugeInitialized,
   isDragonInstallActive,
-  setDragonInstallActive
+  setDragonInstallActive,
+  getAskMode,
+  cycleAskMode,
+  STUN_EDGE_ASK_MODE_FLAG,
+  DIRE_ECLAIR_ASK_MODE_FLAG
 } from "../lib/guilty-gear-state.js";
 import {
   GUILTY_GEAR_MOVE_NAME,
@@ -21,7 +25,9 @@ import {
   STRIVE_ITEM,
   GUILTY_GEAR_UNLOCK_ITEMS,
   STRIVE_UNLOCK_ITEMS,
-  DRAGON_INSTALL_MOVE_NAME
+  DRAGON_INSTALL_MOVE_NAME,
+  STUN_EDGE_MOVE_NAME,
+  DIRE_ECLAIR_MOVE_NAME
 } from "../data/guilty-gear-items.js";
 
 // 길티기어를 배우면 게이지를 초기화하고 스턴엣지/다이어 에클라/폴트리스
@@ -200,6 +206,36 @@ function promptSetGauge(current, max) {
   });
 }
 
+// 스턴엣지/다이어 에클라 옆에 "항상 적용/매번 묻기/항상 미적용" 순환 배지를
+// 붙인다. 클릭할 때마다 다음 모드로 넘어간다(dw-automation의 "자동 아니오"
+// 토글과 같은 패턴). 실제로 이 모드를 참조하는 로직은
+// features/guilty-gear-attacks.js에 있다.
+const ASK_MODE_LABEL_KEYS = {
+  always: "NOMALS_DW_HOMEBREW.GuiltyGear.AskModeAlways",
+  ask: "NOMALS_DW_HOMEBREW.GuiltyGear.AskModeAsk",
+  never: "NOMALS_DW_HOMEBREW.GuiltyGear.AskModeNever"
+};
+
+function appendAskModeBadge($item, actor, flagKey, defaultMode, badgeClass) {
+  const $tags = getOrCreateTagsContainer($item);
+  $tags.find(`.${badgeClass}`).remove();
+
+  const mode = getAskMode(actor, flagKey, defaultMode);
+  const label = game.i18n.localize(ASK_MODE_LABEL_KEYS[mode]);
+  const $badge = $(
+    `<a class="tag ${badgeClass}${mode !== "always" ? " dwauto-guilty-gear-askmode-on" : ""}" title="${game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.AskModeBadgeTitle")}">${label}</a>`
+  );
+  $tags.append($badge);
+
+  if (actor.isOwner) {
+    $badge.on("click", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      await cycleAskMode(actor, flagKey, defaultMode);
+    });
+  }
+}
+
 // 길티기어 무브 옆에 "게이지 N/5" 배지를 붙인다(요청하신 "액션명 옆 토글"에
 // 해당). 소유자는 클릭해서 원하는 값으로 바로 맞출 수 있다 — 실제 판정에
 // 따른 자동 증감(접근전 7+, 피격, 폴트리스 디펜스 소비 등)과 별개로 GM/
@@ -251,6 +287,22 @@ function onRenderActorSheet(app, html) {
         `<a class="tag dwauto-dragon-install-badge${active ? " dwauto-dragon-install-on" : ""}">${game.i18n.localize(active ? "NOMALS_DW_HOMEBREW.GuiltyGear.DragonInstallOn" : "NOMALS_DW_HOMEBREW.GuiltyGear.DragonInstallOff")}</a>`
       );
       $tags.append($badge);
+    }
+  }
+
+  const stunEdgeItem = actor.items.find((i) => i.type === "move" && i.name === STUN_EDGE_MOVE_NAME);
+  if (stunEdgeItem) {
+    const $item = html.find(`.item[data-item-id="${stunEdgeItem.id}"]`);
+    if ($item.length) {
+      appendAskModeBadge($item, actor, STUN_EDGE_ASK_MODE_FLAG, "always", "dwauto-guilty-gear-stun-edge-askmode-badge");
+    }
+  }
+
+  const direEclairItem = actor.items.find((i) => i.type === "move" && i.name === DIRE_ECLAIR_MOVE_NAME);
+  if (direEclairItem) {
+    const $item = html.find(`.item[data-item-id="${direEclairItem.id}"]`);
+    if ($item.length) {
+      appendAskModeBadge($item, actor, DIRE_ECLAIR_ASK_MODE_FLAG, "ask", "dwauto-guilty-gear-dire-eclair-askmode-badge");
     }
   }
 }

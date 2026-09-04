@@ -2,6 +2,7 @@ import { registerSettings } from "./settings.js";
 import { registerGuiltyGearCore } from "./features/guilty-gear-core.js";
 import { registerGuiltyGearAttacks, registerGuiltyGearRollGate } from "./features/guilty-gear-attacks.js";
 import { registerParalysisStatusEffect } from "./lib/status-effects.js";
+import { registerPendingDamageBonusConsumer } from "./lib/pending-damage-bonus.js";
 
 Hooks.once("init", () => {
   registerSettings();
@@ -38,3 +39,4 @@ Hooks.once("ready", () => {
 // 일어나므로 등록 자체를 미룰 이유가 없다.
 registerGuiltyGearCore();
 registerGuiltyGearAttacks();
+registerPendingDamageBonusConsumer();
