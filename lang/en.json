@@ -35,6 +35,11 @@
       "DragonInstallHpPercent": {
         "Name": "Dragon Install HP percent",
         "Hint": "Dragon Install auto-activates when HP is at or below this percent of max (rounded) and gauge is full."
+      },
+      "GuiltyGearCompendiumMenu": {
+        "Name": "Build Guilty Gear/Strive action compendium",
+        "Label": "Build Actions",
+        "Hint": "Creates or updates a world compendium containing the Guilty Gear/Strive action items."
       }
     },
     "GuiltyGear": {
@@ -69,6 +74,20 @@
       "AskModeAsk": "Ask Every Time",
       "AskModeNever": "Never Apply",
       "AskModeBadgeTitle": "Click to cycle Always Apply / Ask Every Time / Never Apply."
+    },
+    "GuiltyGearCompendium": {
+      "Title": "Guilty Gear/Strive Action Compendium",
+      "Hint": "Clicking the button below creates a world compendium split into \"길티기어\"/\"스트라이브\" folders and fills it with the 8 action items. Existing folders/items are left untouched - only missing ones are added, so it's safe to click again anytime.",
+      "RunButton": "Build",
+      "Close": "Close",
+      "Done": "Compendium updated - {created} added, {skipped} already present and skipped.",
+      "PackLabel": "Guilty Gear/Strive Actions"
+    },
+    "SettingsTabs": {
+      "General": "General",
+      "GuiltyGear": "Guilty Gear",
+      "Strive": "Strive",
+      "Other": "Other"
     }
   }
 }

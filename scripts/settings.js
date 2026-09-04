@@ -1,4 +1,5 @@
 import { MODULE_ID, SETTINGS } from "./constants.js";
+import { GuiltyGearCompendiumMenu } from "./apps/guilty-gear-compendium-menu.js";
 
 // dw-automation과 같은 관례: 모든 game.settings.register/registerMenu 호출을
 // 여기 한 곳에 모은다.
@@ -10,6 +11,19 @@ export function registerSettings() {
     config: true,
     type: Boolean,
     default: true
+  });
+
+  // 길티기어/스트라이브 액션을 담은 진짜 Foundry 컴펜디엄을 만드는 버튼.
+  // 자세한 설계는 lib/guilty-gear-compendium.js 참고 — 자동으로 실행되지
+  // 않고, GM이 이 버튼을 눌러야만 만들어지거나(이미 있으면) 빠진 항목만
+  // 채워진다.
+  game.settings.registerMenu(MODULE_ID, SETTINGS.GUILTY_GEAR_COMPENDIUM_MENU, {
+    name: "NOMALS_DW_HOMEBREW.Settings.GuiltyGearCompendiumMenu.Name",
+    label: "NOMALS_DW_HOMEBREW.Settings.GuiltyGearCompendiumMenu.Label",
+    hint: "NOMALS_DW_HOMEBREW.Settings.GuiltyGearCompendiumMenu.Hint",
+    icon: "fas fa-book",
+    type: GuiltyGearCompendiumMenu,
+    restricted: true
   });
 
   game.settings.register(MODULE_ID, SETTINGS.GUILTY_GEAR_MOVE_NAMES, {

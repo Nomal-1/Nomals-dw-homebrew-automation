@@ -35,6 +35,11 @@
       "DragonInstallHpPercent": {
         "Name": "드래곤 인스톨 발동 HP 비율(%)",
         "Hint": "HP가 최대치의 이 비율 이하(반올림)이고 게이지가 가득 찼을 때 드래곤 인스톨이 자동 발동합니다."
+      },
+      "GuiltyGearCompendiumMenu": {
+        "Name": "길티기어/스트라이브 액션 컴펜디엄 만들기",
+        "Label": "액션 만들기",
+        "Hint": "길티기어/스트라이브 액션을 담은 월드 컴펜디엄을 만들거나 갱신합니다."
       }
     },
     "GuiltyGear": {
@@ -69,6 +74,20 @@
       "AskModeAsk": "매번 묻기",
       "AskModeNever": "항상 미적용",
       "AskModeBadgeTitle": "클릭해서 항상 적용/매번 묻기/항상 미적용을 순환합니다."
+    },
+    "GuiltyGearCompendium": {
+      "Title": "길티기어/스트라이브 액션 컴펜디엄",
+      "Hint": "아래 버튼을 누르면 \"길티기어\"/\"스트라이브\" 폴더로 나뉜 월드 컴펜디엄을 만들고, 8개 액션 아이템을 채워 넣습니다. 이미 있는 폴더/아이템은 건드리지 않고 빠진 것만 추가합니다 — 몇 번을 다시 눌러도 안전합니다.",
+      "RunButton": "만들기",
+      "Close": "닫기",
+      "Done": "컴펜디엄을 갱신했습니다 — {created}개 추가, {skipped}개는 이미 있어 건너뜀.",
+      "PackLabel": "길티기어/스트라이브 액션"
+    },
+    "SettingsTabs": {
+      "General": "일반",
+      "GuiltyGear": "길티기어",
+      "Strive": "스트라이브",
+      "Other": "기타"
     }
   }
 }

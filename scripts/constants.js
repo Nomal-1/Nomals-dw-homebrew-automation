@@ -15,5 +15,6 @@ export const SETTINGS = {
   GUILTY_GEAR_MELEE_MOVE_NAMES: "guiltyGearMeleeMoveNames",
   GUILTY_GEAR_DEFEND_MOVE_NAMES: "guiltyGearDefendMoveNames",
   GAUGE_GAIN_MELEE_THRESHOLD: "gaugeGainMeleeThreshold",
-  DRAGON_INSTALL_HP_PERCENT: "dragonInstallHpPercent"
+  DRAGON_INSTALL_HP_PERCENT: "dragonInstallHpPercent",
+  GUILTY_GEAR_COMPENDIUM_MENU: "guiltyGearCompendiumMenu"
 };

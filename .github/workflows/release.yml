@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build module.zip
-        run: zip -r module.zip module.json scripts styles lang README.md
+        run: zip -r module.zip module.json scripts styles lang templates README.md
 
       - name: Create release
         uses: softprops/action-gh-release@v2

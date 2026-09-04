@@ -36,3 +36,38 @@
   background: #6a4c93 !important;
   color: #fff !important;
 }
+
+/* 설정 화면 상단 탭(lib/settings-tabs.js) — 화면단 재배치일 뿐이라 안 좋아
+   보이면 이 블록과 그 파일만 지우면 원래 한 줄 목록으로 완전히 되돌아간다.
+   dw-automation의 같은 스타일(styles/dw-automation.css)과 동일한 톤. */
+.dwauto-guilty-gear-settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 8px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid rgba(106, 76, 147, 0.4);
+}
+
+.dwauto-guilty-gear-settings-tab {
+  padding: 3px 10px;
+  border-radius: 4px;
+  background: rgba(106, 76, 147, 0.12);
+  cursor: pointer;
+  font-size: 0.85rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dwauto-guilty-gear-settings-tab:hover {
+  background: rgba(106, 76, 147, 0.22);
+}
+
+.dwauto-guilty-gear-settings-tab.active {
+  background: #6a4c93;
+  color: #fff;
+}
+
+.dwauto-guilty-gear-settings-tab-body .form-group {
+  margin-bottom: 6px;
+}

@@ -3,10 +3,12 @@ import { registerGuiltyGearCore } from "./features/guilty-gear-core.js";
 import { registerGuiltyGearAttacks, registerGuiltyGearRollGate } from "./features/guilty-gear-attacks.js";
 import { registerParalysisStatusEffect } from "./lib/status-effects.js";
 import { registerPendingDamageBonusConsumer } from "./lib/pending-damage-bonus.js";
+import { registerSettingsTabs } from "./lib/settings-tabs.js";
 
 Hooks.once("init", () => {
   registerSettings();
   registerParalysisStatusEffect();
+  registerSettingsTabs();
 });
 
 // dw-automation이 활성화돼 있는지는 여기서 안내만 하고(사용자에게 켜져
