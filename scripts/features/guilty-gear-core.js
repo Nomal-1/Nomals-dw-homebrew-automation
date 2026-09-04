@@ -27,6 +27,50 @@ import {
   DRAGON_INSTALL_MOVE_NAME,
   DIRE_ECLAIR_MOVE_NAME
 } from "../data/guilty-gear-items.js";
+import { applyGlowFilter, clearGlowFilter } from "../lib/token-magic-fx.js";
+
+// 게이지가 충전됐거나(3 이상) 드래곤 인스톨이 발동 중인 동안 Token Magic FX로
+// 토큰에 발광 필터를 얹는다(안 깔려 있으면 조용히 건너뜀 - lib/token-magic-fx.js
+// 참고). 마비(status-effects.js, 노란색)와 겹치지 않도록 색을 구분한다: 게이지
+// 충전은 은은한 파란색, 드래곤 인스톨은 강렬한 빨강/주황. 두 상태가 동시에
+// 성립하면(예: 드래곤 인스톨 중 게이지가 다시 3 이상 쌓인 경우) 더 극적인
+// 드래곤 인스톨 쪽만 표시한다.
+const GAUGE_CHARGED_FILTER_ID = "nomalsDwHomebrewGaugeCharged";
+const DRAGON_INSTALL_FILTER_ID = "nomalsDwHomebrewDragonInstall";
+const GAUGE_CHARGED_THRESHOLD = 3;
+
+async function syncGuiltyGearTokenFx(actor) {
+  if (!hasGuiltyGear(actor)) {
+    await clearGlowFilter(actor, GAUGE_CHARGED_FILTER_ID);
+    await clearGlowFilter(actor, DRAGON_INSTALL_FILTER_ID);
+    return;
+  }
+
+  if (isDragonInstallActive(actor)) {
+    await clearGlowFilter(actor, GAUGE_CHARGED_FILTER_ID);
+    await applyGlowFilter(actor, DRAGON_INSTALL_FILTER_ID, {
+      color1: 0xff3300,
+      color2: 0xffaa00,
+      outerStrength: 6,
+      innerStrength: 2,
+      loopDuration: 900
+    });
+    return;
+  }
+
+  await clearGlowFilter(actor, DRAGON_INSTALL_FILTER_ID);
+  if (getGauge(actor) >= GAUGE_CHARGED_THRESHOLD) {
+    await applyGlowFilter(actor, GAUGE_CHARGED_FILTER_ID, {
+      color1: 0x2299ff,
+      color2: 0x99e6ff,
+      outerStrength: 3,
+      innerStrength: 1,
+      loopDuration: 2000
+    });
+  } else {
+    await clearGlowFilter(actor, GAUGE_CHARGED_FILTER_ID);
+  }
+}
 
 // 길티기어를 배우면 게이지를 초기화하고 스턴엣지/다이어 에클라/폴트리스
 // 디펜스 세 기술을 한 번에 심는다. 스트라이브도 같은 방식(요구 조건은
@@ -137,7 +181,7 @@ function onUpdateActorGaugeAndDragonInstall(actor, changes, options, userId) {
     }
   }
 
-  maybeToggleDragonInstall(actor);
+  maybeToggleDragonInstall(actor).then(() => syncGuiltyGearTokenFx(actor));
 }
 
 // 드래곤 인스톨: HP <= 최대치의 30%(반올림) + 게이지 5(가득) → 자동 발동.
@@ -176,7 +220,7 @@ function onUpdateActorGaugeChangeCheck(actor, changes, options, userId) {
   const flat = foundry.utils.flattenObject(changes);
   if (!("system.attributes.resource1.value" in flat)) return;
 
-  maybeToggleDragonInstall(actor);
+  maybeToggleDragonInstall(actor).then(() => syncGuiltyGearTokenFx(actor));
 }
 
 function promptSetGauge(current, max) {
