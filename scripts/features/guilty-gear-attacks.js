@@ -10,6 +10,7 @@
 import { MODULE_ID, SETTINGS } from "../constants.js";
 import { getMoveCardInfo, announceActionApplied, promptActorTarget } from "../lib/dw-api.js";
 import { applyParalysis } from "../lib/status-effects.js";
+import { promptFaultlessDefenseBonus } from "./guilty-gear-defense.js";
 import {
   isGuiltyGearEnabled,
   splitCommaList,
@@ -82,26 +83,51 @@ async function applyParalysisWithTarget(actor, moveName, { rollBonus = false } =
   }
 }
 
-// ---- 스턴엣지/세이크리드 엣지: 게이지 소비 게이트 (판정 자체는 시스템의
-// 원래 경로를 그대로 태운다 — 굴리기 전에 게이지가 부족하면 아예 판정을
-// 취소한다, dw-automation의 roll-bypass 패턴과 같은 방식) ----
+// ---- 판정 직전 개입 전부를 여기 한 wrappedRoll에 모은다. libWrapper는
+// 같은 모듈이 같은 대상(game.dungeonworld.ItemDw.prototype.roll)을 두 번
+// wrap하면 에러를 던지므로(dw-automation의 lib/roll-wrapper.js가 실제로
+// 겪고 기록해둔 버그), 이 모듈에서 이 대상을 wrap하는 자리는 반드시 여기
+// 하나뿐이어야 한다 — 폴트리스 디펜스(features/guilty-gear-defense.js)도
+// 별도로 wrap하지 않고 이 함수 안에서 호출된다. ----
 async function wrappedRoll(wrapped, ...args) {
   if (!this.actor || this.type !== "move") return wrapped(...args);
   if (game.system.id !== "dungeonworld" || !isGuiltyGearEnabled()) return wrapped(...args);
 
+  const actor = this.actor;
+
+  // 스턴엣지/세이크리드 엣지: 게이지 소비 게이트. 판정 자체는 시스템의
+  // 원래 경로를 그대로 태우고, 굴리기 전에 게이지가 부족하면 아예 판정을
+  // 취소한다(dw-automation의 roll-bypass 패턴과 같은 방식).
   const isStunEdge = this.name === STUN_EDGE_MOVE_NAME;
   const isSacredEdge = this.name === SACRED_EDGE_MOVE_NAME;
-  if (!isStunEdge && !isSacredEdge) return wrapped(...args);
+  if (isStunEdge || isSacredEdge) {
+    const cost = isStunEdge ? getBaseTechniqueCost(actor, BASE_GAUGE_COST) : getEnhancedTechniqueCost(actor, BASE_GAUGE_COST);
 
-  const actor = this.actor;
-  const cost = isStunEdge ? getBaseTechniqueCost(actor, BASE_GAUGE_COST) : getEnhancedTechniqueCost(actor, BASE_GAUGE_COST);
+    if (cost > 0 && getGauge(actor) < cost) {
+      ui.notifications.warn(game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.GaugeInsufficient", { name: actor.name, cost }));
+      return undefined;
+    }
 
-  if (cost > 0 && getGauge(actor) < cost) {
-    ui.notifications.warn(game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.GaugeInsufficient", { name: actor.name, cost }));
-    return undefined;
+    if (cost > 0) await trySpendGauge(actor, cost);
+    return wrapped(...args);
   }
 
-  if (cost > 0) await trySpendGauge(actor, cost);
+  // 폴트리스 디펜스: "방어" 판정이면 게이지를 소비한 만큼 이번 판정에
+  // rollMod로 그대로 더한다(dw-automation 자신의 wrappedRoll도 같은 방식
+  // — this.system.rollMod를 굴리기 직전에 임시로 올렸다가 끝나면
+  // 되돌린다 — 여러 모듈이 같은 대상을 wrap해도 이 패턴은 서로 누적되지
+  // 서로 덮어쓰지 않는다).
+  const bonus = await promptFaultlessDefenseBonus(this, actor);
+  if (bonus > 0) {
+    const original = this.system.rollMod;
+    this.system.rollMod = (Number(original) || 0) + bonus;
+    try {
+      return await wrapped(...args);
+    } finally {
+      this.system.rollMod = original;
+    }
+  }
+
   return wrapped(...args);
 }
 

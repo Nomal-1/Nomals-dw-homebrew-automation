@@ -61,8 +61,8 @@
       "ParalysisApplied": "{target}에게 마비를 걸었습니다.",
       "GaugeInsufficient": "{name}의 게이지가 부족합니다(필요: {cost}).",
       "MeleeFollowUpPrompt": "{move}를 사용하시겠습니까? (게이지 {cost} 소비)",
-      "FaultlessDefensePrompt": "폴트리스 디펜스: 게이지를 몇 점 쓰시겠습니까? (0~{gauge}, 쓴 만큼 예비 획득)",
-      "FaultlessDefenseApplied": "폴트리스 디펜스로 게이지 {spend}점을 써서 예비 {spend}점을 추가로 얻었습니다."
+      "FaultlessDefensePrompt": "폴트리스 디펜스: 이번 방어 판정에 게이지를 몇 점 쓰시겠습니까? (0~{gauge}, 쓴 만큼 판정에 +보정치)",
+      "FaultlessDefenseApplied": "폴트리스 디펜스로 게이지 {spend}점을 써서 이번 판정에 +{spend} 보정치를 더합니다."
     }
   }
 }

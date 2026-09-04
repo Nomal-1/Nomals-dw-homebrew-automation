@@ -61,8 +61,8 @@
       "ParalysisApplied": "Paralyzed {target}.",
       "GaugeInsufficient": "{name} doesn't have enough gauge (needs {cost}).",
       "MeleeFollowUpPrompt": "Use {move}? (costs {cost} gauge)",
-      "FaultlessDefensePrompt": "Faultless Defense: how much gauge do you want to spend? (0-{gauge}, gained as reserve 1:1)",
-      "FaultlessDefenseApplied": "Spent {spend} gauge on Faultless Defense for +{spend} reserve."
+      "FaultlessDefensePrompt": "Faultless Defense: how much gauge do you want to spend on this Defend roll? (0-{gauge}, added as a +bonus to the roll)",
+      "FaultlessDefenseApplied": "Spent {spend} gauge on Faultless Defense for a +{spend} bonus on this roll."
     }
   }
 }
