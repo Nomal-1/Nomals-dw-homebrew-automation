@@ -18,14 +18,21 @@ const STATUS_ID = "nomalsDwHomebrewParalysis";
 const TOKEN_MAGIC_FILTER_ID = "nomalsDwHomebrewParalysis";
 
 export function registerParalysisStatusEffect() {
-  const exists = CONFIG.statusEffects?.some((e) => e.id === STATUS_ID);
-  if (exists) return;
-
-  CONFIG.statusEffects.push({
+  const effect = {
     id: STATUS_ID,
     name: "NOMALS_DW_HOMEBREW.GuiltyGear.ParalysisStatusName",
     img: "icons/svg/paralysis.svg"
-  });
+  };
+
+  // V14부터 CONFIG.statusEffects가 배열에서 {[id]: 설정} 객체로 바뀌었다
+  // (V12/V13은 배열). 둘 다 지원한다.
+  const registry = CONFIG.statusEffects;
+  if (Array.isArray(registry)) {
+    if (!registry.some((e) => e.id === STATUS_ID)) registry.push(effect);
+    return;
+  }
+
+  if (registry && !(STATUS_ID in registry)) registry[STATUS_ID] = effect;
 }
 
 // Sequencer/JB2A가 없어도(대부분의 세계에 없음) 조용히 건너뛴다 — 있을 때만
