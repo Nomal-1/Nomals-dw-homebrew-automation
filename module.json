@@ -6,7 +6,7 @@
   "socket": true,
   "compatibility": {
     "minimum": "12",
-    "verified": "12.331"
+    "verified": "14"
   },
   "relationships": {
     "systems": [
@@ -15,7 +15,7 @@
         "type": "system",
         "compatibility": {
           "minimum": "1.8.0",
-          "verified": "1.8.2"
+          "verified": "1.10.0"
         }
       }
     ],
