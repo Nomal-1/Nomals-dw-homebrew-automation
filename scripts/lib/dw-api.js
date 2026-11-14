@@ -43,3 +43,14 @@ export function promptActorTarget(actor, options = {}) {
 export function getOrCreateTagsContainer($item) {
   return api().getOrCreateTagsContainer($item);
 }
+
+// dw-automation 0.122+의 직업별 자동화 창에서 "이 액션 자동화"를 끈 액션인지.
+// 옛 버전(함수 없음)이면 끈 적이 없는 것으로 본다.
+export function isMoveItemDisabled(item) {
+  const fn = game.modules.get("dw-automation")?.api?.isMoveItemDisabled;
+  try {
+    return typeof fn === "function" ? !!fn(item) : false;
+  } catch (err) {
+    return false;
+  }
+}

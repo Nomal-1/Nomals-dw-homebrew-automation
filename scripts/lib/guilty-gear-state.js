@@ -1,4 +1,5 @@
 import { MODULE_ID, SETTINGS } from "../constants.js";
+import { isMoveItemDisabled } from "./dw-api.js";
 
 // 게이지(0~5)는 던전월드 시스템 템플릿에 이미 있는 범용 자원 필드
 // (system.attributes.resource1 — value/max/label)에 그대로 얹는다. 커스텀
@@ -23,12 +24,17 @@ export function isGuiltyGearEnabled() {
 
 export function hasGuiltyGear(actor) {
   const names = splitCommaList(SETTINGS.GUILTY_GEAR_MOVE_NAMES);
-  return actor.items.some((i) => i.type === "move" && names.includes(i.name));
+  return actor.items.some((i) => i.type === "move" && names.includes(i.name) && !isMoveItemDisabled(i));
 }
 
 export function hasStrive(actor) {
   const names = splitCommaList(SETTINGS.STRIVE_MOVE_NAMES);
-  return actor.items.some((i) => i.type === "move" && names.includes(i.name));
+  return actor.items.some((i) => i.type === "move" && names.includes(i.name) && !isMoveItemDisabled(i));
+}
+
+// 이 이름의 액션을 가졌고, 직업별 자동화 창에서 그 액션의 자동화를 끄지 않았나
+export function hasActiveMove(actor, name) {
+  return actor.items.some((i) => i.type === "move" && i.name === name && !isMoveItemDisabled(i));
 }
 
 export function getActorLevel(actor) {

@@ -4,6 +4,7 @@ import { registerGuiltyGearAttacks, registerGuiltyGearRollGate } from "./feature
 import { registerParalysisStatusEffect, registerParalysisTokenMagicSync } from "./lib/status-effects.js";
 import { registerPendingDamageBonusConsumer } from "./lib/pending-damage-bonus.js";
 import { registerSettingsTabs } from "./lib/settings-tabs.js";
+import { registerClassAutomationFeatures } from "./lib/class-automation.js";
 
 Hooks.once("init", () => {
   registerSettings();
@@ -43,3 +44,4 @@ registerGuiltyGearCore();
 registerGuiltyGearAttacks();
 registerPendingDamageBonusConsumer();
 registerParalysisTokenMagicSync();
+registerClassAutomationFeatures();

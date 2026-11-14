@@ -88,6 +88,32 @@
       "GuiltyGear": "Guilty Gear",
       "Strive": "Strive",
       "Other": "Other"
+    },
+    "ClassAutomation": {
+      "Gauge": {
+        "Label": "Guilty Gear gauge",
+        "Hint": "When learned, adds Stun Edge, Dire Eclair and Faultless Defense to the sheet and tracks the gauge (0-5). A melee move (the melee move names setting) at or above the threshold gives +1 gauge."
+      },
+      "Edge": {
+        "Label": "Gauge-spending techniques",
+        "Hint": "Spends gauge before rolling (Stun Edge base cost, Sacred Edge enhanced cost). Blocks the roll when the gauge is short."
+      },
+      "Melee": {
+        "Label": "Melee follow-ups",
+        "Hint": "On a successful melee roll, adds Dire Eclair and Ride the Lightning options to the weapon dialog."
+      },
+      "Faultless": {
+        "Label": "Faultless Defense",
+        "Hint": "Before a Defend roll, asks how much gauge to spend and adds it to the roll."
+      },
+      "Strive": {
+        "Label": "Strive",
+        "Hint": "When learned, adds Sacred Edge, Ride the Lightning and Dragon Install to the sheet."
+      },
+      "Dragon": {
+        "Label": "Dragon Install",
+        "Hint": "Triggers automatically when HP is at or below the set share of max and the gauge is full (token glow)."
+      }
     }
   }
 }

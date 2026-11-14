@@ -1,5 +1,5 @@
 import { MODULE_ID, SETTINGS } from "../constants.js";
-import { getMoveCardInfo, announceActionApplied, getOrCreateTagsContainer } from "../lib/dw-api.js";
+import { getMoveCardInfo, announceActionApplied, getOrCreateTagsContainer, isMoveItemDisabled } from "../lib/dw-api.js";
 import {
   isGuiltyGearEnabled,
   splitCommaList,
@@ -90,6 +90,7 @@ async function onCreateItem(item, options, userId) {
   if (!isGuiltyGearEnabled()) return;
   if (item.type !== "move") return;
   if (userId !== game.user.id) return;
+  if (isMoveItemDisabled(item)) return;
 
   const actor = item.parent;
   if (!actor || actor.documentName !== "Actor" || actor.type !== "character") return;
@@ -129,7 +130,7 @@ function onCreateChatMessageGaugeGain(message, options, userId) {
   if (!hasGuiltyGear(actor)) return;
 
   const meleeNames = splitCommaList(SETTINGS.GUILTY_GEAR_MELEE_MOVE_NAMES);
-  if (!meleeNames.includes(title)) return;
+  if (!meleeNames.includes(title) && !meleeNames.includes(info.originalTitle)) return;
 
   const threshold = Number(game.settings.get(MODULE_ID, SETTINGS.GAUGE_GAIN_MELEE_THRESHOLD)) || 7;
   if (!Number.isFinite(rollTotal) || rollTotal < threshold) return;

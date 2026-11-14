@@ -13,7 +13,10 @@
 // (features/guilty-gear-attacks.js)에서 이 파일의 promptFaultlessDefenseBonus를
 // 호출하는 방식으로 합친다.
 import { SETTINGS } from "../constants.js";
-import { splitCommaList, hasGuiltyGear, getGauge, trySpendGauge } from "../lib/guilty-gear-state.js";
+import { splitCommaList, hasGuiltyGear, getGauge, trySpendGauge, hasActiveMove } from "../lib/guilty-gear-state.js";
+
+// 던전월드 기본 액션 "방어"의 원문 이름(번역 이름이 바뀌어도 알아보기 위해)
+const DEFEND_ORIGINAL_NAME = "Defend";
 import { announceActionApplied } from "../lib/dw-api.js";
 import { FAULTLESS_DEFENSE_MOVE_NAME } from "../data/guilty-gear-items.js";
 
@@ -48,11 +51,12 @@ function promptGaugeSpend(actor, maxGauge) {
 // 호출부인 guilty-gear-attacks.js의 wrappedRoll이 실제로 반영한다). 해당
 // 없으면 0을 반환해서 아무 것도 안 건드리게 한다.
 export async function promptFaultlessDefenseBonus(item, actor) {
-  const defendNames = splitCommaList(SETTINGS.GUILTY_GEAR_DEFEND_MOVE_NAMES);
-  if (!defendNames.includes(item.name)) return 0;
+  // 번역 이름 목록 + 원문 영어 이름(Babele originalName) — dw-automation과 같은 규칙
+  const defendNames = [...splitCommaList(SETTINGS.GUILTY_GEAR_DEFEND_MOVE_NAMES), DEFEND_ORIGINAL_NAME];
+  if (!defendNames.includes(item.name) && !defendNames.includes(item.flags?.babele?.originalName)) return 0;
   if (!hasGuiltyGear(actor)) return 0;
 
-  const hasFaultless = actor.items.some((i) => i.type === "move" && i.name === FAULTLESS_DEFENSE_MOVE_NAME);
+  const hasFaultless = hasActiveMove(actor, FAULTLESS_DEFENSE_MOVE_NAME);
   if (!hasFaultless) return 0;
 
   const gauge = getGauge(actor);

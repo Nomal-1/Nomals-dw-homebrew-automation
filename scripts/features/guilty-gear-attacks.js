@@ -15,7 +15,7 @@
 // 확인(라이드 더 라이트닝 → 다이어 에클라)으로 어느 걸 쓸지 고르고, 라이드
 // 더 라이트닝의 +1d8은 이어서 굴릴 "기본 접근전 데미지"에 수정치로 예약된다.
 import { MODULE_ID, SETTINGS } from "../constants.js";
-import { getMoveCardInfo, announceActionApplied, promptActorTarget } from "../lib/dw-api.js";
+import { getMoveCardInfo, announceActionApplied, promptActorTarget, isMoveItemDisabled } from "../lib/dw-api.js";
 import { applyParalysis } from "../lib/status-effects.js";
 import { grantPendingWeaponDamageBonus } from "../lib/pending-damage-bonus.js";
 import { promptFaultlessDefenseBonus } from "./guilty-gear-defense.js";
@@ -28,7 +28,8 @@ import {
   getBaseTechniqueCost,
   getEnhancedTechniqueCost,
   getAskMode,
-  DIRE_ECLAIR_ASK_MODE_FLAG
+  DIRE_ECLAIR_ASK_MODE_FLAG,
+  hasActiveMove
 } from "../lib/guilty-gear-state.js";
 import {
   STUN_EDGE_MOVE_NAME,
@@ -103,6 +104,8 @@ async function wrappedRoll(wrapped, ...args) {
   if (game.system.id !== "dungeonworld" || !isGuiltyGearEnabled()) return wrapped(...args);
 
   const actor = this.actor;
+  // 직업별 자동화 창에서 이 액션의 자동화를 껐으면 게이지 소비·보너스 없이 그대로 굴린다
+  if (isMoveItemDisabled(this)) return wrapped(...args);
 
   const isStunEdge = this.name === STUN_EDGE_MOVE_NAME;
   const isSacredEdge = this.name === SACRED_EDGE_MOVE_NAME;
@@ -210,10 +213,10 @@ function onCreateChatMessageMeleeJudgment(message, options, userId) {
   if (!hasGuiltyGear(actor)) return;
 
   const meleeNames = splitCommaList(SETTINGS.GUILTY_GEAR_MELEE_MOVE_NAMES);
-  if (!meleeNames.includes(title)) return;
+  if (!meleeNames.includes(title) && !meleeNames.includes(info.originalTitle)) return;
 
-  const hasRide = actor.items.some((i) => i.type === "move" && i.name === RIDE_THE_LIGHTNING_MOVE_NAME);
-  const hasDireEclair = actor.items.some((i) => i.type === "move" && i.name === DIRE_ECLAIR_MOVE_NAME);
+  const hasRide = hasActiveMove(actor, RIDE_THE_LIGHTNING_MOVE_NAME);
+  const hasDireEclair = hasActiveMove(actor, DIRE_ECLAIR_MOVE_NAME);
   if (!hasRide && !hasDireEclair) return;
 
   markMeleeDialogEligible(actor);
@@ -234,10 +237,10 @@ function findActorFromWeaponDialog(html) {
 function buildMeleeFlavorOptions(actor) {
   const options = [`<option value="none">${game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.MeleeFlavorNone")}</option>`];
 
-  const hasRide = actor.items.some((i) => i.type === "move" && i.name === RIDE_THE_LIGHTNING_MOVE_NAME);
+  const hasRide = hasActiveMove(actor, RIDE_THE_LIGHTNING_MOVE_NAME);
   if (hasRide) options.push(`<option value="ride">${RIDE_THE_LIGHTNING_MOVE_NAME}</option>`);
 
-  const hasDireEclair = actor.items.some((i) => i.type === "move" && i.name === DIRE_ECLAIR_MOVE_NAME);
+  const hasDireEclair = hasActiveMove(actor, DIRE_ECLAIR_MOVE_NAME);
   const eclairMode = getAskMode(actor, DIRE_ECLAIR_ASK_MODE_FLAG, "ask");
   const eclairAvailable = hasDireEclair && eclairMode !== "never";
   if (eclairAvailable) options.push(`<option value="eclair">${DIRE_ECLAIR_MOVE_NAME}</option>`);
