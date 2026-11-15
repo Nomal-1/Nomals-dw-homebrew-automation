@@ -20,29 +20,29 @@ const DEFEND_ORIGINAL_NAME = "Defend";
 import { announceActionApplied } from "../lib/dw-api.js";
 import { FAULTLESS_DEFENSE_MOVE_NAME } from "../data/guilty-gear-items.js";
 
-function promptGaugeSpend(actor, maxGauge) {
-  return new Promise((resolve) => {
-    new Dialog({
-      title: FAULTLESS_DEFENSE_MOVE_NAME,
-      content: `
-        <form>
-          <p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.FaultlessDefensePrompt", { gauge: maxGauge })}</p>
-          <div class="form-group">
-            <input type="number" name="amount" value="0" min="0" max="${maxGauge}">
-          </div>
-        </form>
-      `,
-      buttons: {
-        ok: {
-          label: game.i18n.localize("NOMALS_DW_HOMEBREW.Confirm"),
-          callback: (html) => resolve(Math.max(0, Math.min(maxGauge, Number(html.find('[name="amount"]').val()) || 0)))
-        },
-        cancel: { label: game.i18n.localize("NOMALS_DW_HOMEBREW.Cancel"), callback: () => resolve(0) }
+// 폴트리스 디펜스로 쓸 게이지를 묻는 창(DialogV2, 12+). 확인하면 숫자, 취소·닫기면 0.
+async function promptGaugeSpend(actor, maxGauge) {
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title: FAULTLESS_DEFENSE_MOVE_NAME },
+    content: `
+      <p>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.FaultlessDefensePrompt", { gauge: maxGauge })}</p>
+      <div class="form-group">
+        <input type="number" name="amount" value="0" min="0" max="${maxGauge}" autofocus>
+      </div>
+    `,
+    buttons: [
+      {
+        action: "ok",
+        label: "NOMALS_DW_HOMEBREW.Confirm",
+        default: true,
+        callback: (event, button) => Math.max(0, Math.min(maxGauge, Number(button.form.elements.amount.value) || 0))
       },
-      default: "ok",
-      close: () => resolve(0)
-    }).render(true);
+      { action: "cancel", label: "NOMALS_DW_HOMEBREW.Cancel" }
+    ],
+    rejectClose: false
   });
+  // 취소는 "cancel"(버튼 이름), 창 닫기는 null이 돌아온다
+  return typeof result === "number" ? result : 0;
 }
 
 // item이 "방어"(GUILTY_GEAR_DEFEND_MOVE_NAMES) 판정이고 이 액터가 폴트리스

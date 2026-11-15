@@ -224,29 +224,29 @@ function onUpdateActorGaugeChangeCheck(actor, changes, options, userId) {
   maybeToggleDragonInstall(actor).then(() => syncGuiltyGearTokenFx(actor));
 }
 
-function promptSetGauge(current, max) {
-  return new Promise((resolve) => {
-    new Dialog({
-      title: game.i18n.localize("NOMALS_DW_HOMEBREW.GuiltyGear.AdjustGaugeTitle"),
-      content: `
-        <form>
-          <div class="form-group">
-            <label>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.AdjustGaugeLabel", { max })}</label>
-            <input type="number" name="amount" value="${current}" min="0" max="${max}">
-          </div>
-        </form>
-      `,
-      buttons: {
-        ok: {
-          label: game.i18n.localize("NOMALS_DW_HOMEBREW.Confirm"),
-          callback: (html) => resolve(Math.max(0, Math.min(max, Number(html.find('[name="amount"]').val()) || 0)))
-        },
-        cancel: { label: game.i18n.localize("NOMALS_DW_HOMEBREW.Cancel"), callback: () => resolve(null) }
+// 게이지를 직접 맞추는 창(DialogV2, 12+). 확인하면 숫자, 취소·닫기면 null.
+async function promptSetGauge(current, max) {
+  const result = await foundry.applications.api.DialogV2.wait({
+    window: { title: "NOMALS_DW_HOMEBREW.GuiltyGear.AdjustGaugeTitle" },
+    content: `
+      <div class="form-group">
+        <label>${game.i18n.format("NOMALS_DW_HOMEBREW.GuiltyGear.AdjustGaugeLabel", { max })}</label>
+        <input type="number" name="amount" value="${current}" min="0" max="${max}" autofocus>
+      </div>
+    `,
+    buttons: [
+      {
+        action: "ok",
+        label: "NOMALS_DW_HOMEBREW.Confirm",
+        default: true,
+        callback: (event, button) => Math.max(0, Math.min(max, Number(button.form.elements.amount.value) || 0))
       },
-      default: "ok",
-      close: () => resolve(null)
-    }).render(true);
+      { action: "cancel", label: "NOMALS_DW_HOMEBREW.Cancel" }
+    ],
+    rejectClose: false
   });
+  // 취소는 "cancel"(버튼 이름), 창 닫기는 null이 돌아온다
+  return typeof result === "number" ? result : null;
 }
 
 // 스턴엣지/다이어 에클라 옆에 "항상 적용/매번 묻기/항상 미적용" 순환 배지를
