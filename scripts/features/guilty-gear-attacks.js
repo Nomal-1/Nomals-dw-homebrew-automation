@@ -329,4 +329,6 @@ export function registerGuiltyGearAttacks() {
   Hooks.on("createChatMessage", onCreateChatMessageRangedResult);
   Hooks.on("createChatMessage", onCreateChatMessageMeleeJudgment);
   Hooks.on("renderDialog", onRenderDialog);
+  // dw-automation 0.125.0부터 무기 선택 창이 DialogV2(lib/dialogs.js의 CompatDialog)라 이 훅으로 온다.
+  Hooks.on("renderDialogV2", (app, element) => onRenderDialog(app, $(element)));
 }
